@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technospace Inventory</title>
+    <!-- Load Supabase ONLY ONCE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ALL YOUR CSS STYLES HERE - KEEP THEM AS IS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        h1, h2, h3 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f1e8 50%, #ffffff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px 35px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(210, 180, 140, 0.15);
+            margin-bottom: 30px;
+            border: 1px solid rgba(210, 180, 140, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .logo-space {
+            width: 70px;
+            height: 70px;
+            background: #f5f1e8;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(210, 180, 140, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-space img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 42px;
+            color: #8b6f47;
+            font-weight: 600;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(210, 180, 140, 0.15);
+            border: 1px solid rgba(210, 180, 140, 0.2);
+        }
+
+        .search-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"], input[type="number"], input[type="file"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 16px 20px;
+            border: 2px solid rgba(210, 180, 140, 0.2);
+            border-radius: 14px;
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #5a4a3a;
+        }
+
+        input::placeholder {
+            color: #a89a8a;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #c19a6b;
+            background: white;
+        }
+
+        button {
+            padding: 16px 35px;
+            background: linear-gradient(135deg, #d4a574 0%, #c19a6b 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(193, 154, 107, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #90c695 0%, #6fb876 100%);
+            box-shadow: 0 4px 14px rgba(111, 184, 118, 0.3);
+        }
+
+        .btn-remove {
+            background: linear-gradient(135deg, #e89b9b 0%, #d97777 100%);
+            box-shadow: 0 4px 14px rgba(217, 119, 119, 0.3);
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #d4a574 0%, #b8926a 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 14px rgba(193, 154, 107, 0.25);
+        }
+
+        .result-header h3 {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .part-details {
+            font-size: 22px;
+            opacity: 0.95;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .part-number-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .part-number-label {
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 8px;
+        }
+
+        .part-number-value {
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .ts-part-number-value {
+            font-weight: 600;
+            color: #fff8e1;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 20px;
+        }
+
+        .total-qty {
+            font-size: 22px;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .location-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 250, 245, 0.9) 100%);
+            padding: 25px;
+            margin-bottom: 18px;
+            border-radius: 15px;
+            border-left: 5px solid #d4a574;
+            box-shadow: 0 2px 10px rgba(210, 180, 140, 0.1);
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .location-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #b23d3d;
+        }
+
+        .qty-badge {
+            background: linear-gradient(135deg, #90c695 0%, #6fb876 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(111, 184, 118, 0.2);
+        }
+
+        .action-section {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 2px solid rgba(210, 180, 140, 0.2);
+        }
+
+        .action-section input {
+            flex: 0 0 120px;
+            padding: 10px 16px;
+            font-size: 16px;
+        }
+
+        .message {
+            padding: 20px 20px;
+            border-radius: 14px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #d4f5dc 0%, #c6f6d5 100%);
+            color: #22543d;
+            border-left: 5px solid #6fb876;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #ffe5e5 0%, #fed7d7 100%);
+            color: #742a2a;
+            border-left: 5px solid #d97777;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #c19a6b;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .add-new-section {
+            background: linear-gradient(135deg, rgba(212, 245, 220, 0.4) 0%, rgba(198, 246, 213, 0.4) 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border-left: 5px solid #6fb876;
+            box-shadow: 0 2px 10px rgba(111, 184, 118, 0.1);
+        }
+        
+        .quick-actions-label {
+            font-size: 22px;
+            font-weight: 700;
+            color: #8b6f47;
+        }
+
+        .add-new-section h3 {
+            color: #22543d;
+            margin-bottom: 18px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .total-number {
+            color: #ffffff;
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            font-weight: 700;
+            font-size: 28px;
+            padding: 4px 14px;
+            border-radius: 999px;
+            display: inline-block;
+            line-height: 1.2;
+            box-shadow: 0 2px 6px rgba(56, 161, 105, 0.35);
+        }
+
+        .form-row input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .logo-upload-section {
+            background: rgba(245, 241, 232, 0.5);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .logo-upload-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: #8b6f47;
+            font-weight: 600;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(245, 241, 232, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #d4a574 0%, #c19a6b 100%);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .search-section {
+                flex-direction: column;
+            }
+
+            input[type="text"], input[type="number"] {
+                min-width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .location-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .action-section {
+                flex-direction: column;
+            }
+
+            .action-section input {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .btn-small {
+                width: 100%;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-row input {
+                width: 100%;
+            }
+            
+            .part-number-display {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-space">
+                <!-- Replace 'your-logo.png' with your actual logo file path -->
+                <img src="your-logo.png" alt="Company Logo">
+            </div>
+            <h1>TECHNOSPACE ENGINEERS</h1>
+        </header>
+
+        <div class="card">
+            <h2 style="margin-bottom: 25px; color: #b56c45; font-size: 28px; font-weight: 600; text-align: center;">Packing Inventory Management</h2>
+            <div class="search-section">
+                <input type="text" id="searchPart" placeholder="Enter Part Number">
+                <button id="searchButton">Search</button>
+            </div>
+            
+            <div id="searchResults"></div>
+        </div>
+
+        <div id="addNewSection" style="display: none;">
+            <div class="card">
+                <div class="add-new-section">
+                    <h3>Add New Location</h3>
+                    <div class="form-row">
+                        <input type="text" id="newLocation" placeholder="Location (e.g., A1-2)">
+                        <input type="number" id="newQty" placeholder="Quantity" min="1">
+                        <button id="addLocationButton">Add Location</button>
+                    </div>
+                    <div id="newLocationMessage"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Wait for the page to load completely
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing...');
+        
+        // Your Supabase credentials
+        const SUPABASE_URL = 'https://hfvkwtphtvssvrblovxn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhmdmt3dHBodHZzc3ZyYmxvdnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3OTQ4OTUsImV4cCI6MjA4MTM3MDg5NX0.GHSip8IDZTl3ksZ2jCDzkQ4dBfXGNZqPfMHmuprp8XA';
+        
+        // Initialize Supabase - use a different variable name to avoid conflicts
+        let supabaseClient;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized');
+            } else {
+                throw new Error('Supabase not loaded properly');
+            }
+        } catch (error) {
+            console.error('Error initializing Supabase:', error);
+            alert('Error initializing database. Please refresh the page.');
+            return;
+        }
+        
+        let currentSearchPart = '';
+        
+        // Search function
+        async function searchPart() {
+            const partNum = document.getElementById('searchPart').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            const addNewSection = document.getElementById('addNewSection');
+            
+            if (!partNum) {
+                resultsDiv.innerHTML = '<div class="message error">Please enter a part number</div>';
+                addNewSection.style.display = 'none';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+            addNewSection.style.display = 'none';
+            currentSearchPart = partNum;
+            
+            try {
+                console.log('Searching for part:', partNum);
+                
+                const { data, error } = await supabaseClient
+                    .from('inventory')
+                    .select('*')
+                    .eq('part_number', partNum)
+                    .order('location', { ascending: true });
+                
+                if (error) {
+                    console.error('Supabase error:', error);
+                    resultsDiv.innerHTML = `<div class="message error">Database error: ${error.message}</div>`;
+                    return;
+                }
+                
+                console.log('Search results:', data);
+                
+                if (!data || data.length === 0) {
+                    resultsDiv.innerHTML = `<div class="message error">No parts found with number: ${partNum}</div>`;
+                    addNewSection.style.display = 'block';
+                    return;
+                }
+                
+                const totalQty = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                const firstItem = data[0];
+                const tsPartNumber = firstItem.ts_part_number || 'Not Specified';
+                
+                let html = `
+                    <div class="result-header">
+                        <h3>Part Details</h3>
+                        <div class="part-details">
+                            <div class="part-number-display">
+                                <span class="part-number-label">Part Number:</span>
+                                <span class="part-number-value">${firstItem.part_number}</span>
+                            </div>
+                            <div class="part-number-display">
+                                <span class="part-number-label">TS Part Number:</span>
+                                <span class="ts-part-number-value">${tsPartNumber}</span>
+                            </div>
+                            <div class="total-qty">
+                                Total Quantity: <span class="total-number">${totalQty}</span> 
+                                parts across ${data.length} location(s)
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                data.forEach((item, index) => {
+                    const itemQuantity = item.quantity || 0;
+                    html += `
+                        <div class="location-card">
+                            <div class="location-header">
+                                <span class="location-name">📍 ${item.location}</span>
+                                <span class="qty-badge">${itemQuantity} parts</span>
+                            </div>
+                            <div class="action-section">
+                                <span class="quick-actions-label">Quick Actions:</span>
+                                <input type="number" id="qty-${index}" placeholder="Qty" min="1" value="1">
+                                <button class="btn-small btn-add" data-index="${index}" data-id="${item.id}">+ Add</button>
+                                <button class="btn-small btn-remove" data-index="${index}" data-id="${item.id}">- Remove</button>
+                            </div>
+                            <div id="msg-${index}"></div>
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = html;
+                addNewSection.style.display = 'block';
+                
+                // Add event listeners to the new buttons
+                document.querySelectorAll('.btn-add').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        const id = this.getAttribute('data-id');
+                        quickAdd(index, id);
+                    });
+                });
+                
+                document.querySelectorAll('.btn-remove').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        const id = this.getAttribute('data-id');
+                        quickRemove(index, id);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<div class="message error">Error searching. Check console for details.</div>';
+            }
+        }
+        
+        // Quick add function
+        async function quickAdd(index, itemId) {
+            const qtyInput = document.getElementById(`qty-${index}`);
+            const qty = parseInt(qtyInput.value);
+            const msgDiv = document.getElementById(`msg-${index}`);
+            
+            if (!qty || qty < 1) {
+                msgDiv.innerHTML = '<div class="message error">Please enter valid quantity</div>';
+                setTimeout(() => msgDiv.innerHTML = '', 3000);
+                return;
+            }
+            
+            msgDiv.innerHTML = '<div class="loading">Adding...</div>';
+            
+            try {
+                // Get current quantity
+                const { data: currentData, error: fetchError } = await supabaseClient
+                    .from('inventory')
+                    .select('quantity')
+                    .eq('id', itemId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
+                const currentQty = currentData.quantity || 0;
+                const newQuantity = currentQty + qty;
+                
+                const { error } = await supabaseClient
+                    .from('inventory')
+                    .update({ quantity: newQuantity })
+                    .eq('id', itemId);
+                
+                if (error) throw error;
+                
+                msgDiv.innerHTML = `<div class="message success">Added ${qty} parts. New total: ${newQuantity}</div>`;
+                setTimeout(() => searchPart(), 1000);
+                
+            } catch (error) {
+                msgDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+                console.error('Add error:', error);
+            }
+        }
+        
+        // Quick remove function
+        async function quickRemove(index, itemId) {
+            const qtyInput = document.getElementById(`qty-${index}`);
+            const qty = parseInt(qtyInput.value);
+            const msgDiv = document.getElementById(`msg-${index}`);
+            
+            if (!qty || qty < 1) {
+                msgDiv.innerHTML = '<div class="message error">Please enter valid quantity</div>';
+                setTimeout(() => msgDiv.innerHTML = '', 3000);
+                return;
+            }
+            
+            msgDiv.innerHTML = '<div class="loading">Removing...</div>';
+            
+            try {
+                const { data: currentData, error: fetchError } = await supabaseClient
+                    .from('inventory')
+                    .select('quantity')
+                    .eq('id', itemId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
+                const currentQty = currentData.quantity || 0;
+                
+                if (currentQty < qty) {
+                    msgDiv.innerHTML = `<div class="message error">Cannot remove ${qty} parts. Only ${currentQty} available.</div>`;
+                    return;
+                }
+                
+                const newQuantity = currentQty - qty;
+                
+                if (newQuantity === 0) {
+                    const { error } = await supabaseClient
+                        .from('inventory')
+                        .delete()
+                        .eq('id', itemId);
+                    
+                    if (error) throw error;
+                    
+                    msgDiv.innerHTML = `<div class="message success">Removed all ${qty} parts. Location removed.</div>`;
+                } else {
+                    const { error } = await supabaseClient
+                        .from('inventory')
+                        .update({ quantity: newQuantity })
+                        .eq('id', itemId);
+                    
+                    if (error) throw error;
+                    
+                    msgDiv.innerHTML = `<div class="message success">Removed ${qty} parts. New total: ${newQuantity}</div>`;
+                }
+                
+                setTimeout(() => searchPart(), 1000);
+                
+            } catch (error) {
+                msgDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+                console.error('Remove error:', error);
+            }
+        }
+        
+        // Add new location function
+        async function addNewLocation() {
+            const location = document.getElementById('newLocation').value.trim().toUpperCase();
+            const qty = parseInt(document.getElementById('newQty').value);
+            const msgDiv = document.getElementById('newLocationMessage');
+            
+            if (!location || !qty || qty < 1) {
+                msgDiv.innerHTML = '<div class="message error">Please fill all fields correctly</div>';
+                setTimeout(() => msgDiv.innerHTML = '', 3000);
+                return;
+            }
+            
+            msgDiv.innerHTML = '<div class="loading">Adding...</div>';
+            
+            try {
+                // Get ts_part_number from first existing item
+                let tsPartNumber = '';
+                const { data: existingItems } = await supabaseClient
+                    .from('inventory')
+                    .select('ts_part_number')
+                    .eq('part_number', currentSearchPart)
+                    .limit(1);
+                
+                if (existingItems && existingItems.length > 0) {
+                    tsPartNumber = existingItems[0].ts_part_number || '';
+                }
+                
+                // Check if location already exists for this part
+                const { data: existingData, error: checkError } = await supabaseClient
+                    .from('inventory')
+                    .select('id, quantity')
+                    .eq('part_number', currentSearchPart)
+                    .eq('location', location)
+                    .maybeSingle();
+                
+                if (checkError) {
+                    console.error('Check error:', checkError);
+                    throw checkError;
+                }
+                
+                if (existingData) {
+                    // Update existing location
+                    const currentQty = existingData.quantity || 0;
+                    const newQuantity = currentQty + qty;
+                    const { error } = await supabaseClient
+                        .from('inventory')
+                        .update({ quantity: newQuantity })
+                        .eq('id', existingData.id);
+                    
+                    if (error) throw error;
+                    
+                    msgDiv.innerHTML = `<div class="message success">Added ${qty} parts to existing location. New total: ${newQuantity}</div>`;
+                } else {
+                    // Insert new location
+                    const { error } = await supabaseClient
+                        .from('inventory')
+                        .insert([{ 
+                            part_number: currentSearchPart, 
+                            ts_part_number: tsPartNumber,
+                            location: location, 
+                            quantity: qty 
+                        }]);
+                    
+                    if (error) throw error;
+                    
+                    msgDiv.innerHTML = `<div class="message success">Successfully added ${qty} parts to new location ${location}</div>`;
+                }
+                
+                document.getElementById('newLocation').value = '';
+                document.getElementById('newQty').value = '';
+                setTimeout(() => searchPart(), 1000);
+                
+            } catch (error) {
+                console.error('Add location error:', error);
+                msgDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Set up event listeners
+        document.getElementById('searchButton').addEventListener('click', searchPart);
+        document.getElementById('addLocationButton').addEventListener('click', addNewLocation);
+        
+        // Enter key support for search
+        document.getElementById('searchPart').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchPart();
+        });
+        
+        // Enter key support for new location
+        document.getElementById('newLocation').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addNewLocation();
+        });
+        
+        document.getElementById('newQty').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addNewLocation();
+        });
+        
+        console.log('All event listeners set up');
+    });
+</script>
+</body>
+</html>
